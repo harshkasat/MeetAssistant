@@ -1,0 +1,15 @@
+{
+    "manifest_version": 3,
+    "name": "Meet Detector",
+    "version": "1.0",
+    "permissions": [
+      "tabs",
+      "webNavigation"
+    ],
+    "background": {
+      "service_worker": "background.js"
+    },
+    "host_permissions": [
+      "https://meet.google.com/*"
+    ]
+  }
