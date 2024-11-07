@@ -3,6 +3,13 @@ const BOT_SERVER = 'http://localhost:5000/new-meeting';  // Your bot server endp
 
 let detectedMeetings = new Set();
 
+/**
+ * Notifies the bot server about a new Google Meet URL.
+ *
+ * @param {string} url - The Google Meet URL to notify the server about.
+ *
+ * @return {void}
+ */
 function notifyServer(url) {
   // Avoid duplicate notifications for the same URL
   if (detectedMeetings.has(url)) return;
