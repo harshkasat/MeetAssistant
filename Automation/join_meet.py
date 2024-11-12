@@ -3,7 +3,7 @@ import time
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-class JoinMeet:
+class MeetConfig:
     def __init__(self, driver):
         """
         Initializes a new instance of the JoinMeet class.
@@ -12,7 +12,7 @@ class JoinMeet:
             driver: The Selenium WebDriver instance to interact with the browser.
         """
         self.driver = driver
-        self.wait = WebDriverWait(self.driver, 30)
+        self.wait = WebDriverWait(self.driver, 60)
     
     def continue_without_mic_video(self):
         """
@@ -38,9 +38,7 @@ class JoinMeet:
         """
         try:
             print('Creating Guest user:', random_num)
-            # Wait for the username input field to be clickable
             self.wait.until(EC.element_to_be_clickable((By.XPATH, "//input[@type='text']")))
-            # Enter the guest username
             self.driver.find_element(By.XPATH, "//input[@type='text']").send_keys(f"Guest_{random_num}")
             time.sleep(2)
         except Exception as e:
@@ -50,9 +48,9 @@ class JoinMeet:
     def ask_join_meet(self):
         try:
             self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[span[contains(text(), 'Ask to join')]]")))
-            self.driver.find_element(By.XPATH, "//button[span[contains(text(), 'Ask to join')]]").click()
-            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Leave call']")))
-            print('Joining Meet using Guest user')
+            button = self.driver.find_element(By.XPATH, "//button[span[contains(text(), 'Ask to join')]]")
+            button.click()
+            time.sleep(2)
         except Exception as e:
             print("Failed to click on the 'Ask to join' button:", e)
     
@@ -70,3 +68,20 @@ class JoinMeet:
         except Exception as e:
             print("Failed to click on the 'Leave call' button:", e)
     
+    def dismiss_popup(self):
+        try:
+            self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[.//span[text()='Got it']]")))
+            button = self.driver.find_element(By.XPATH, "//button[.//span[text()='Got it']]")
+            button.click()
+            time.sleep(2)
+        except Exception as e:
+            print("Failed to click on the 'Got it' button:", e)
+    
+    def click_on_caption(self):
+        try:
+            # Locate button using aria-label attribute
+            button = self.driver.find_element(By.XPATH, "//button[@aria-label='Turn on captions']")
+            button.click()
+            time.sleep(2)
+        except Exception as e:
+            print("Failed to click on the 'Turn on captions' button:", e)

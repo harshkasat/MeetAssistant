@@ -1,7 +1,6 @@
 from AwsService import s3_client, BUCKET_NAME
 from botocore.exceptions import ClientError
 import logging
-from io import BytesIO
 
 
 def upload_file_to_s3(file_content, s3_key):
@@ -15,12 +14,16 @@ def upload_file_to_s3(file_content, s3_key):
     Returns:
         bool: True if the file is uploaded successfully, False if there is an error.
     """
+    if file_content is None:
+        logging.error("File content cannot be None")
+        return False
+        
     try:
-        if isinstance(file_content, BytesIO):
-            s3_client.upload_fileobj(file_content, Bucket=BUCKET_NAME, Key=s3_key)
-        else:
-            s3_client.upload_file(file_content, Bucket=BUCKET_NAME, Key=s3_key)
+        s3_client.upload_file(file_content, Bucket=BUCKET_NAME, Key=s3_key)
     except ClientError as e:
-        logging.error(e)
+        logging.error(f"AWS S3 upload error: {e}")
+        return False
+    except FileNotFoundError as e:
+        logging.error(f"File not found: {file_content}")
         return False
     return True
