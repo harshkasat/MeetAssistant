@@ -67,7 +67,7 @@ def start_stop_recording(driver, leave_meet):
         recording_meet.start_recording()
 
         # Wait for specified duration or until leave_meet is triggered
-        time.sleep(10)
+        time.sleep(20)
 
         if leave_meet:
             try:
@@ -83,79 +83,6 @@ def start_stop_recording(driver, leave_meet):
         print(f"An error occurred: {str(e)}")
         import traceback
         traceback.print_exc()  # Print the full stack trace
-
-# def google_meet(meet_url: str = None, leave_meet: bool = False):
-#     driver = None
-#     try:
-#         recording_path = os.path.join(os.path.dirname(__file__), "recordings")
-#         if not os.path.exists(recording_path):
-#             os.makedirs(recording_path)
-#         meeting_code = extract_meeting_code(meet_url)
-#         driver = create_stealth_driver(meeting_code)
-#         config_meet = MeetConfig(driver)
-#         random_num = create_random_number()
-            
-#         driver.get(meet_url)
-#         print("Redirected to Google Meet", meet_url)
-#         time.sleep(3)
-#         config_meet.continue_without_mic_video()
-#         config_meet.type_username(random_num)
-#         config_meet.ask_join_meet()
-#         config_meet.dismiss_popup()
-        
-        
-#         recording_meet = MeetRecorder(driver=driver)
-#         recording_meet.start_recording()
-        
-#         # Wait for specified duration or until leave_meet is triggered
-#         time.sleep(10)
-        
-#         if leave_meet:
-#             try:
-#                 # Stop recording and get video path
-#                 video_path = recording_meet.stop_recording()
-#                 if video_path:  # Only proceed if video_path is not None
-#                     full_video_path = os.path.join(recording_path, video_path)
-#                     print(f"Video path: {full_video_path}")
-                    
-
-#                     time.sleep(2)
-#                     # Verify the full path video file exists
-#                     if os.path.exists(full_video_path):
-#                         # Upload video to S3
-#                         try:
-#                             upload_file_to_s3(full_video_path, f"meet_{video_path}.webm") 
-#                             print(f"Video uploaded to S3: {video_path}")
-#                         except Exception as s3_error:
-#                             print(f"Error uploading video to S3: {s3_error}")
-#                     else:
-#                         print(f"Video file does not exist: {full_video_path}")
-
-#             except Exception as record_error:
-#                 print(f"Error during recording stop: {record_error}")
-#                 raise # Re-raise the exception to see the full error stack
-
-#             finally:
-#                 # Leave the meeting
-#                 config_meet.leave_meet()
-#                 print("Meet left successfully")
-
-#     except Exception as e:
-#         print(f"An error occurred: {str(e)}")
-#         import traceback
-#         traceback.print_exc()  # Print the full stack trace
-
-#     finally:
-#         try:
-#             time.sleep(2)  # Give a moment for any final operations
-#             driver.quit()
-#             print("Driver quit successfully")
-#             # remove the video file if it exists
-#             if os.path.exists(video_path):
-#                 os.remove(video_path)
-#                 print(f"Video file removed: {video_path}")
-#         except Exception as quit_error:
-#             print(f"Error during driver quit: {quit_error}")
 
 
 def main(meet_url: str = None, leave_meet: bool = True):
@@ -223,4 +150,4 @@ def main(meet_url: str = None, leave_meet: bool = True):
 
 
 if __name__ == '__main__':
-    main(meet_url="https://meet.google.com/ync-rscn-uhz")
+    main(meet_url="https://meet.google.com/vne-vtea-kcs")
