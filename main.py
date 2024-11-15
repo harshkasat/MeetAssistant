@@ -98,23 +98,35 @@ def main(meet_url: str = None, leave_meet: bool = True):
         # Initialize transcription
         transcription_extractor = TranscriptionExtractor(driver=driver, transcript_path="transcript.txt")
         
-        # Start transcription in a separate thread
+        # Create threads for both recording and transcription
+        recording_thread = threading.Thread(
+            target=lambda: setattr(threading.current_thread(), 'video_path', 
+                                 start_stop_recording(driver=driver, leave_meet=leave_meet))
+        )
         transcription_thread = threading.Thread(target=transcription_extractor.extract_transcription)
-        transcription_thread.daemon = True  # Make thread daemon so it exits when main thread exits
-        transcription_thread.start()
-
-        # Start Recording and wait for specified duration
-        print(f"Starting recording and transcription for {recording_duration} seconds...")
-        video_path = start_stop_recording(driver=driver, leave_meet=leave_meet)
         
-        # After recording is done, stop transcription
-        print("Recording complete, stopping transcription...")
-        transcription_extractor.stop_transcription()
+        # Make both threads daemon
+        recording_thread.daemon = True
+        transcription_thread.daemon = True
+        
+        # Start both threads
+        print("Starting recording and transcription concurrently...")
+        recording_thread.start()
+        transcription_thread.start()
+        
+        # Wait for recording duration
+        time.sleep(recording_duration)
+        
+        # Wait for both threads to complete
+        recording_thread.join(timeout=5)
         transcription_thread.join(timeout=5)
         
-        if transcription_thread.is_alive():
-            print("Warning: Transcription thread didn't stop properly")
+        # Get the video path from the recording thread
+        video_path = getattr(recording_thread, 'video_path', None)
         
+        if recording_thread.is_alive() or transcription_thread.is_alive():
+            print("Warning: One or both threads didn't stop properly")
+
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         import traceback
