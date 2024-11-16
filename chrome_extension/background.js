@@ -1,5 +1,5 @@
 const MEET_URL_PATTERN = /^https:\/\/meet\.google\.com\/[a-z]{3}-[a-z]{4}-[a-z]{3}$/;
-const BOT_SERVER = 'http://localhost:5000/new-meeting';  // Your bot server endpoint
+const BOT_SERVER = 'http://localhost:8000/new-meeting';  // Your bot server endpoint
 
 let detectedMeetings = new Set();
 

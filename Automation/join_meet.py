@@ -80,8 +80,23 @@ class MeetConfig:
     def click_on_caption(self):
         try:
             # Locate button using aria-label attribute
-            button = self.driver.find_element(By.XPATH, "//button[@aria-label='Turn on captions']")
+            button = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Turn on captions']")))
             button.click()
             time.sleep(2)
         except Exception as e:
             print("Failed to click on the 'Turn on captions' button:", e)
+
+    def check_num_participants(self):
+        try:
+            element = self.wait.until(
+                EC.presence_of_element_located((By.XPATH, "//div[@class='uGOf1d']"))
+            )
+            num_participants = element.text
+            print(f"Number of participants: {num_participants}")
+            if int(num_participants) <= 2:
+                return True
+            else:
+                return False
+        except Exception as e:
+            print("Failed to check number of participants:", e)
+            return 0

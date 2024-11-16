@@ -60,14 +60,22 @@ def saving_meet_recording(video_path):
         print(f"Error during recording stop: {record_error}")
         raise # Re-raise the exception to see the full error stack
 
-def start_stop_recording(driver, leave_meet):
+    finally:
+        if os.path.exists(full_video_path):
+            os.remove(full_video_path)
+            print(f"Video file removed: {full_video_path}")
+
+def start_stop_recording(driver, config_meet, leave_meet: bool = False ):
     try:
         recording_meet = MeetRecorder(driver=driver)
         # Start Recording
         recording_meet.start_recording()
 
-        # Wait for specified duration or until leave_meet is triggered
-        time.sleep(20)
+        while True:
+            time.sleep(1)
+            if config_meet.check_num_participants():
+                leave_meet = True
+                break
 
         if leave_meet:
             try:
@@ -85,12 +93,10 @@ def start_stop_recording(driver, leave_meet):
         traceback.print_exc()  # Print the full stack trace
 
 
-def main(meet_url: str = None, leave_meet: bool = True):
+def google_meet(meet_url: str = None, leave_meet: bool = False):
     try:
         meeting_code = extract_meeting_code(meet_url)
         driver = create_stealth_driver(meeting_code=meeting_code)
-        video_path = None
-        recording_duration = 10  # Set duration in seconds
 
         # Start Meet
         config_meet = meet_config(driver, meet_url)
@@ -101,7 +107,7 @@ def main(meet_url: str = None, leave_meet: bool = True):
         # Create threads for both recording and transcription
         recording_thread = threading.Thread(
             target=lambda: setattr(threading.current_thread(), 'video_path', 
-                                 start_stop_recording(driver=driver, leave_meet=leave_meet))
+                                 start_stop_recording(driver=driver, leave_meet=leave_meet, config_meet=config_meet))
         )
         transcription_thread = threading.Thread(target=transcription_extractor.extract_transcription)
         
@@ -113,19 +119,15 @@ def main(meet_url: str = None, leave_meet: bool = True):
         print("Starting recording and transcription concurrently...")
         recording_thread.start()
         transcription_thread.start()
-        
-        # Wait for recording duration
-        time.sleep(recording_duration)
-        
+        while True:
+            time.sleep(1)
+            if config_meet.check_num_participants():
+                break
+
         # Wait for both threads to complete
         recording_thread.join(timeout=5)
         transcription_thread.join(timeout=5)
-        
-        # Get the video path from the recording thread
-        video_path = getattr(recording_thread, 'video_path', None)
-        
-        if recording_thread.is_alive() or transcription_thread.is_alive():
-            print("Warning: One or both threads didn't stop properly")
+
 
     except Exception as e:
         print(f"An error occurred: {str(e)}")
@@ -151,15 +153,5 @@ def main(meet_url: str = None, leave_meet: bool = True):
                 driver.quit()
                 print("Driver quit successfully")
             
-            # remove the video file if it exists
-            if video_path and os.path.exists(video_path):
-                os.remove(video_path)
-                print(f"Video file removed: {video_path}")
         except Exception as quit_error:
             print(f"Error during cleanup: {quit_error}")
-
-
-
-
-if __name__ == '__main__':
-    main(meet_url="https://meet.google.com/vne-vtea-kcs")
