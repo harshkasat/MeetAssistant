@@ -93,7 +93,7 @@ class MeetConfig:
             )
             num_participants = element.text
             print(f"Number of participants: {num_participants}")
-            if int(num_participants) <= 2:
+            if int(num_participants) == 1:
                 return True
             else:
                 return False

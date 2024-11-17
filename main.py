@@ -128,7 +128,7 @@ def google_meet(meet_url: str = None, leave_meet: bool = False):
         recording_thread.join(timeout=5)
         transcription_thread.join(timeout=5)
 
-
+        return True
     except Exception as e:
         print(f"An error occurred: {str(e)}")
         import traceback

@@ -1,16 +1,14 @@
-# Use Python 3.9 slim image as base
-FROM python:3.9-slim
+# First stage with Python and undetected-chromedriver
+FROM python:3.9-slim as python-base
+FROM ultrafunk/undetected-chromedriver
+
+# Copy Python from the python image
+COPY --from=python-base /usr/local/bin/python /usr/local/bin/python
+COPY --from=python-base /usr/local/lib/python3.9 /usr/local/lib/python3.9
+COPY --from=python-base /usr/local/lib/libpython3.9.so.1.0 /usr/local/lib/libpython3.9.so.1.0
 
 # Set working directory
 WORKDIR /app
-
-# Install system dependencies required for Chrome/Selenium
-RUN apt-get update && apt-get install -y \
-    wget \
-    gnupg \
-    chromium \
-    chromium-driver \
-    && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .

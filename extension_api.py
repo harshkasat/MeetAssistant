@@ -1,11 +1,9 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, HttpUrl, field_validator
+from pydantic import BaseModel, field_validator
 import re
-import threading
-from typing import Set
+from typing import ClassVar
 import logging
-import time
 from enum import Enum
 
 from main import google_meet
@@ -32,7 +30,7 @@ class StatusEnum(str, Enum):
 class MeetingResponse(BaseModel):
     status: StatusEnum 
     message: str
-    ERROR = "error"
+    ERROR: ClassVar[str] = "error"
 
 # Initialize FastAPI app
 app = FastAPI(
