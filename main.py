@@ -92,6 +92,15 @@ def start_stop_recording(driver, config_meet, leave_meet: bool = False ):
         import traceback
         traceback.print_exc()  # Print the full stack trace
 
+def start_stop_transcription(driver, transcript_path: str = "transcript.txt"):
+    try:
+        transcription_extractor = TranscriptionExtractor(driver=driver, transcript_path=transcript_path)
+        transcription_extractor.extract_transcription()
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        import traceback
+        traceback.print_exc()  # Print the full stack trace
+
 
 def google_meet(meet_url: str = None, leave_meet: bool = False):
     try:

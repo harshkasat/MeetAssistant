@@ -44,6 +44,10 @@ def create_stealth_driver(meeting_code: str):
     # Add mode argument
     options.add_argument("--disable-gpu")  # Disable GPU acceleration
     options.add_argument("--window-size=1920,1080") # Set window size to 1920x1080
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-setuid-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--remote-debugging-port=9222")
 
     driver = uc.Chrome(options=options,
                        version_main=130)
