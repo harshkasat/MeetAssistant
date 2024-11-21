@@ -1,53 +1,42 @@
-# Use a lightweight base image with Python
-FROM python:3.10-slim
+FROM selenium/standalone-chrome:129.0
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1
+USER root
+
+# install Python3, pip, venv, and Xvfb
+RUN apt-get update && apt-get install -y python3-pip python3-venv xvfb build-essential libffi-dev python3-dev && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# set Python-related environment variables
 ENV PYTHONUNBUFFERED=1
+ENV DISPLAY=:99
 
-# Install required system dependencies
-RUN apt-get update && apt-get install -y \
-    wget \
-    curl \
-    unzip \
-    gnupg \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+# create and activate a virtual environment
+RUN python3 -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# Install Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list && \
-    apt-get update && apt-get install -y google-chrome-stable && \
-    rm -rf /var/lib/apt/lists/*
-
-# Install ChromeDriver
-RUN CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE) && \
-    wget -q "https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip" && \
-    unzip chromedriver_linux64.zip && \
-    mv chromedriver /usr/local/bin/ && \
-    chmod +x /usr/local/bin/chromedriver && \
-    rm chromedriver_linux64.zip
-
-RUN apt-get update && apt-get install -y wget && \
-    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
-    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -f install -y
-
-
-# Set working directory
+# set up the working directory
 WORKDIR /app
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the application code
 COPY . .
 
-# Expose port 8000 for FastAPI
+
+# ensure correct permissions for /tmp/.X11-unix to prevent Xvfb from issuing warnings
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
+# change ownership of venv to seluser and switch users
+RUN chown -R seluser:seluser /opt/venv /app
+USER seluser
+
+
+# Expose ports
 EXPOSE 8000
 EXPOSE 9222
 
-# Command to run the FastAPI application
-CMD ["uvicorn", "extension_api:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run Xvfb and the application
+CMD ["sh", "-c", "Xvfb :99 -ac 2>/dev/null & uvicorn extension_api:app --host 0.0.0.0 --port 8000"]
