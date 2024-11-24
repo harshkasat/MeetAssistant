@@ -2,22 +2,30 @@ FROM selenium/standalone-chrome:129.0
 
 USER root
 
-# install Python3, pip, venv, and Xvfb
+# Add deadsnakes PPA for Python 3.11
+RUN apt-get update && apt-get install -y software-properties-common \
+    && add-apt-repository ppa:deadsnakes/ppa
+
+# install Python 3.11 and other dependencies
 RUN apt-get update && apt-get install -y \
-    python3-full python3-pip python3-venv xvfb build-essential libffi-dev python3-dev \
+    python3.11-full python3.11-dev python3.11-venv python3.11-distutils \
+    python3-pip xvfb build-essential libffi-dev \
     libjpeg-dev zlib1g-dev libpng-dev libfreetype6-dev liblcms2-dev libwebp-dev \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # set up the working directory
 WORKDIR /app
 
-# Create and activate virtual environment
+# Create and activate virtual environment with Python 3.11
 ENV VIRTUAL_ENV=/app/venv
-RUN python3 -m venv $VIRTUAL_ENV
+RUN python3.11 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt .
+
+# Ensure pip is upgraded and install setuptools in the virtual environment
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
 # Install Python dependencies in virtual environment
 RUN pip install --no-cache-dir -r requirements.txt

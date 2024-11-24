@@ -71,11 +71,10 @@ def start_stop_recording(driver, config_meet, leave_meet: bool = False ):
         # Start Recording
         recording_meet.start_recording()
 
-        while True:
+        while not config_meet.check_num_participants():
             time.sleep(1)
-            if config_meet.check_num_participants():
-                leave_meet = True
-                break
+        else:
+            leave_meet = True
 
         if leave_meet:
             try:
@@ -114,26 +113,26 @@ def google_meet(meet_url: str = None, leave_meet: bool = False):
         transcription_extractor = TranscriptionExtractor(driver=driver, transcript_path="transcript.txt")
         
         # Create threads for both recording and transcription
-        recording_thread = threading.Thread(
-            target=lambda: setattr(threading.current_thread(), 'video_path', 
-                                 start_stop_recording(driver=driver, leave_meet=leave_meet, config_meet=config_meet))
-        )
+        def recording_task():
+            try:
+                video_path = start_stop_recording(driver=driver, leave_meet=leave_meet, config_meet=config_meet)
+                setattr(threading.current_thread(), 'video_path', video_path)
+            except Exception as e:
+                print(f"Error in recording thread: {e}")
+        
+        recording_thread = threading.Thread(target=recording_task)
         transcription_thread = threading.Thread(target=transcription_extractor.extract_transcription)
-        
-        # Make both threads daemon
-        recording_thread.daemon = True
-        transcription_thread.daemon = True
-        
-        # Start both threads
+
+        # Start threads
         print("Starting recording and transcription concurrently...")
         recording_thread.start()
         transcription_thread.start()
-        while True:
-            time.sleep(1)
-            if config_meet.check_num_participants():
-                break
 
-        # Wait for both threads to complete
+        # Monitor participant count
+        while not config_meet.check_num_participants():
+            time.sleep(1)
+
+        # Stop threads after meeting ends
         recording_thread.join(timeout=5)
         transcription_thread.join(timeout=5)
 
@@ -142,25 +141,11 @@ def google_meet(meet_url: str = None, leave_meet: bool = False):
         print(f"An error occurred: {str(e)}")
         import traceback
         traceback.print_exc()
-
     finally:
-        try:
-            # Ensure transcription is stopped
-            if 'transcription_extractor' in locals():
-                transcription_extractor.stop_transcription()
-                if 'transcription_thread' in locals() and transcription_thread.is_alive():
-                    print("Forcing transcription thread to stop...")
-                    transcription_thread.join(timeout=2)
-
-            # Leave Meet
-            if 'config_meet' in locals():
-                config_meet.leave_meet()
-                print("Meet left successfully")
-            
-            time.sleep(2)
-            if 'driver' in locals():
-                driver.quit()
-                print("Driver quit successfully")
-            
-        except Exception as quit_error:
-            print(f"Error during cleanup: {quit_error}")
+        # Cleanup
+        if 'transcription_extractor' in locals():
+            transcription_extractor.stop_transcription()
+        if 'config_meet' in locals():
+            config_meet.leave_meet()
+        if 'driver' in locals():
+            driver.quit()
