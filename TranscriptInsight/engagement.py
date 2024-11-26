@@ -9,7 +9,6 @@ class Engagement:
 
     async def get_engagement(self):
         try:
-            print('1')
             engagements = await self.client.generate_content(questions=ENGAGEMENT_PROMPT)
 
             if engagements:

@@ -18,7 +18,6 @@ class KeyQuestions:
 
     async def get_key_questions(self):
         try:
-            print('3')
             key_question = await self.client.generate_content(questions=KEY_QUESTIONS_PROMPT)
 
             if key_question:

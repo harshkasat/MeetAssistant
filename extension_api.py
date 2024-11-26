@@ -8,7 +8,7 @@ from enum import Enum
 import asyncio
 
 from main import google_meet
-from transcript_insight import run_transcript_insights
+from transcript_insight import async_transcript_insights
 
 # Configure logging
 logging.basicConfig(
@@ -62,7 +62,7 @@ async def new_meeting(request: MeetingRequest):
     """
     try:
         success = google_meet(request.meetUrl)
-        asyncio.run(run_transcript_insights())    
+        await async_transcript_insights()
         if success:
             return MeetingResponse(
                 status=StatusEnum.SUCCESS,

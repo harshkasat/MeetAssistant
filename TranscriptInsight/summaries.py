@@ -8,7 +8,6 @@ class Summaries:
 
     async def get_summary(self):
         try:
-            print('5')
             summary = await self.client.generate_content(questions=SUMMARY_PROMPT)
 
             if summary:

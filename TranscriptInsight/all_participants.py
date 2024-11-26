@@ -10,7 +10,6 @@ class Participants:
 
     async def get_participants(self):
         try:
-            print('2')
             participants = await self.client.generate_content(questions=PARTICIPANTS_PROMPT)
 
             if participants:

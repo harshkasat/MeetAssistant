@@ -10,7 +10,6 @@ class SentimentAnalysis:
 
     async def get_sentiment_analysis(self):
         try:
-            print('4')
             sentiment = await self.client.generate_content(questions=SENTIMENT_ANALYSIS_PROMPT)
 
             if sentiment:
