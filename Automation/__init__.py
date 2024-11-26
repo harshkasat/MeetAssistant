@@ -50,6 +50,8 @@ def create_stealth_driver(meeting_code: str):
     options.add_argument("--remote-debugging-port=9222")
 
     driver = uc.Chrome(options=options,
-                       version_main=129)
+                       version_main=130)
+    # driver = uc.Chrome(options=options,
+    #                    version_main=129)
 
     return driver

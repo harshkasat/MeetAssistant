@@ -5,8 +5,10 @@ import re
 from typing import ClassVar
 import logging
 from enum import Enum
+import asyncio
 
 from main import google_meet
+from transcript_insight import run_transcript_insights
 
 # Configure logging
 logging.basicConfig(
@@ -59,8 +61,8 @@ async def new_meeting(request: MeetingRequest):
     - Initiates bot joining process
     """
     try:
-        success = await google_meet(request.meetUrl)
-        
+        success = google_meet(request.meetUrl)
+        asyncio.run(run_transcript_insights())    
         if success:
             return MeetingResponse(
                 status=StatusEnum.SUCCESS,
@@ -86,6 +88,6 @@ async def health_check():
     return {"status": "healthy"}
 
 
-# if __name__ == "__main__":
-#     import uvicorn
-#     uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")

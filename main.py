@@ -37,7 +37,7 @@ def meet_config(driver, meet_url: str = None):
 def saving_meet_recording(video_path):
     try:
         # Verify the Recording path video file exists # 
-        recording_path = os.path.join(os.path.dirname(__file__), "recordings")
+        recording_path = 'recordings'
         if not os.path.exists(recording_path):
             os.makedirs(recording_path)
 
@@ -60,10 +60,6 @@ def saving_meet_recording(video_path):
         print(f"Error during recording stop: {record_error}")
         raise # Re-raise the exception to see the full error stack
 
-    finally:
-        if os.path.exists(full_video_path):
-            os.remove(full_video_path)
-            print(f"Video file removed: {full_video_path}")
 
 def start_stop_recording(driver, config_meet, leave_meet: bool = False ):
     try:

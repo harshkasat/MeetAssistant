@@ -1,6 +1,5 @@
 from selenium.webdriver.common.by import By
 import time
-import os
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from datetime import datetime
@@ -9,24 +8,22 @@ class TranscriptionExtractor:
     def __init__(self, driver, transcript_path):
         self.driver = driver
         self.transcript_path = transcript_path
-        self.is_running = False  # Add flag to control transcription
-    
+        self.is_running = False
+        self.start_time = None
+        self.last_complete_sentence = ""
+        self.buffer = {}  # Store buffer per speaker
+        
     def stop_transcription(self):
-        """Call this method to stop the transcription"""
         print("\nStopping transcription...")
         self.is_running = False
-        self.last_complete_sentence = ""
-        self.start_time = None
     
     def get_timestamp(self):
-        """Return both absolute and relative timestamps"""
         current_time = datetime.now()
         absolute_time = current_time.strftime("%H:%M:%S")
         
         if self.start_time is None:
             self.start_time = current_time
             
-        # Calculate relative time from start
         elapsed = current_time - self.start_time
         relative_seconds = int(elapsed.total_seconds())
         relative_time = f"{relative_seconds//60:02d}:{relative_seconds%60:02d}"
@@ -36,74 +33,86 @@ class TranscriptionExtractor:
     def extract_transcription(self):
         try:
             self.is_running = True
-            buffer = ""
-            last_speaker = ""
+            last_speaker = None
             
-            with open(self.transcript_path, "a", encoding="utf-8") as file:
-                # Write header
+            with open(self.transcript_path, "w", encoding="utf-8") as file:
                 file.write("=== Transcription Start ===\n")
                 file.write(f"Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
                 file.write("Time  | Elapsed | Speaker | Text\n")
                 file.write("-" * 70 + "\n")
                 
-                while self.is_running:  # Check flag in the loop
+                while self.is_running:
                     try:
-                        # Check if we should stop
-                        if not self.is_running:
-                            break
-
-                        # Find the caption container
-                        caption_container = self.driver.find_element(By.XPATH, "//div[@class='nMcdL bj4p3b']")
-                        
-                        # Extract speaker name
-                        # Wait until the speaker's name div is visible
-                        WebDriverWait(self.driver, 10).until(
-                            EC.visibility_of_element_located((By.XPATH, "//div[@class='KcIKyf jxFHg']"))
+                        # Find all caption containers (handles multiple speakers)
+                        caption_containers = WebDriverWait(self.driver, 5).until(
+                            EC.presence_of_all_elements_located((By.CSS_SELECTOR, "div.nMcdL.bj4p3b"))
                         )
-                        try:
-                            speaker = caption_container.find_element(By.XPATH, "//div[@class='KcIKyf jxFHg']").text
-                        except:
-                            speaker = "Unknown"
                         
-                        # Extract caption text
-                        caption_div = caption_container.find_element(By.XPATH, ".//div[@class='bh44bd VbkSUe']")
-                        current_text = " ".join([span.text for span in caption_div.find_elements(By.TAG_NAME, "span")])
-                        current_text = ' '.join(current_text.split())  # Clean whitespace
-                        
-                        # Only process if we have new text
-                        if current_text and current_text != buffer:
-                            # If current text ends with punctuation
-                            if current_text.strip().endswith(('.', '!', '?')):
-                                # Only write if it's different from the last complete sentence
-                                if current_text != self.last_complete_sentence or speaker != last_speaker:
-                                    abs_time, rel_time = self.get_timestamp()
-                                    formatted_line = f"{abs_time} | {rel_time} | {speaker:8} | {current_text}\n"
-                                    file.write(formatted_line)
-                                    file.flush()
-                                    self.last_complete_sentence = current_text
+                        for container in caption_containers:
+                            try:
+                                # Extract speaker name with better error handling
+                                try:
+                                    speaker = container.find_element(By.CSS_SELECTOR, "div.KcIKyf.jxFHg").text
+                                except:
+                                    speaker = "Unknown"
+                                
+                                # Extract caption text using CSS selector
+                                spans = container.find_elements(By.CSS_SELECTOR, "div.bh44bd.VbkSUe span")
+                                current_text = " ".join(span.text for span in spans).strip()
+                                
+                                # Only process if text is not empty
+                                if current_text:
+                                    # Initialize buffer for new speakers
+                                    if speaker not in self.buffer:
+                                        self.buffer[speaker] = ""
+                                    
+                                    # If speaker changes or text is significantly different
+                                    if (last_speaker and last_speaker != speaker) or \
+                                    (self.buffer[speaker] and 
+                                        len(current_text) > len(self.buffer[speaker]) and 
+                                        current_text not in self.buffer[speaker]):
+                                        
+                                        # Write previous speaker's text
+                                        abs_time, rel_time = self.get_timestamp()
+                                        formatted_line = f"{abs_time} | {rel_time} | {last_speaker:8} | {self.buffer.get(last_speaker, '')}\n"
+                                        file.write(formatted_line)
+                                        file.flush()
+                                        
+                                        # Reset buffer for the new speaker
+                                        self.buffer[speaker] = current_text
+                                    else:
+                                        # Store the most meaningful text
+                                        if len(current_text) > len(self.buffer[speaker]):
+                                            self.buffer[speaker] = current_text
+                                    
+                                    # Update last speaker
                                     last_speaker = speaker
-                                buffer = ""
-                            else:
-                                buffer = current_text
+                            
+                            except Exception as e:
+                                continue  # Skip problematic containers
                         
-                        for _ in range(5):
-                            if not self.is_running:
-                                break
-                            time.sleep(0.1)
+                        time.sleep(0.2)  # Reduced polling interval
                             
                     except Exception as e:
                         if not self.is_running:
                             break
-                        print(f"Temporary error in caption extraction: {e}")
                         time.sleep(0.5)
                         continue
                 
-                # Write any remaining buffer content
-                if buffer and buffer != self.last_complete_sentence:
+                # Improved handling of speaker change
+                if (last_speaker and last_speaker != speaker) or \
+                (self.buffer.get(speaker) and 
+                    len(current_text) > len(self.buffer[speaker]) and 
+                    current_text != self.buffer[speaker]):
+                    # Write the previous speaker's text
                     abs_time, rel_time = self.get_timestamp()
-                    formatted_line = f"{abs_time} | {rel_time} | {last_speaker:8} | {buffer}\n"
+                    formatted_line = f"{abs_time} | {rel_time} | {last_speaker:8} | {self.buffer.get(last_speaker, '')}\n"
                     file.write(formatted_line)
                     file.flush()
+
+                    # Reset buffer for new speaker
+                    self.buffer[speaker] = current_text
+
                 
                 # Write footer
                 file.write("\n=== Transcription End ===\n")
