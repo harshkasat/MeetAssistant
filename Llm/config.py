@@ -1,6 +1,6 @@
 import asyncio
 import google.generativeai as genai
-from Llm import genai_api_key, text
+from Llm import genai_api_key, TEXT
 
 
 # Initialize the API client
@@ -10,7 +10,7 @@ class ApiClient():
         try:
             genai.configure(api_key=genai_api_key)
             llm = genai.GenerativeModel('models/gemini-1.5-flash',
-                        system_instruction=text)            
+                        system_instruction=TEXT)            
 
             if llm is None:
                 raise ValueError("LLM component is None")

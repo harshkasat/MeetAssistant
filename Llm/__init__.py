@@ -24,7 +24,7 @@ SAFE_SETTINGS = [
     },
 ]
 
-text = """You are a highly skilled transcript analyzer tasked with extracting 
+TEXT = """You are a highly skilled transcript analyzer tasked with extracting 
 meaningful insights from conversations. Below is the transcript for analysis:
 {transcript}
 
@@ -38,7 +38,7 @@ Here’s what you need to do:
 5. Ensure your analysis is error-free and well-structured.
 
 Let’s begin."""
-text = text.format(transcript = get_transcript())
+TEXT = TEXT.format(transcript = get_transcript())
 
 genai_api_key = os.getenv('GEMINI_API_KEY')
 os.environ['GOOGLE_API_KEY'] = os.getenv('GEMINI_API_KEY')

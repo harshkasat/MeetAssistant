@@ -4,144 +4,157 @@ import time
 import random
 import os
 import threading
+from queue import Queue
 from MeetRecording.recording_meet import MeetRecorder
 from MeetTranscript.extract_transcription import TranscriptionExtractor
 from AwsService.s3_utils import upload_file_to_s3
+from transcript_insight import async_transcript_insights
 
 
-def create_random_number():
-    return random.randint(1000, 9999)
+class MeetSession:
+    def __init__(self, meet_url):
+        self.meet_url = meet_url
+        self.driver = None
+        self.config_meet = None
+        self.start_event = threading.Event()
+        self.stop_event = threading.Event()
+        self.recording_finished = threading.Event()
+        self.transcription_finished = threading.Event()
+        self.error_queue = Queue()
+        self.video_path = None
 
+    def setup_meet(self):
+        try:
+            meeting_code = extract_meeting_code(self.meet_url)
+            self.driver = create_stealth_driver(meeting_code=meeting_code)
+            self.config_meet = MeetConfig(self.driver)
+            
+            self.driver.get(self.meet_url)
+            print("Redirected to Google Meet", self.meet_url)
+            time.sleep(3)
+            
+            self.config_meet.continue_without_mic_video()
+            self.config_meet.type_username(random.randint(1000, 9999))
+            self.config_meet.ask_join_meet()
+            self.config_meet.dismiss_popup()
+            self.config_meet.click_on_caption()
+            
+            return True
+        except Exception as e:
+            self.error_queue.put(f"Setup error: {str(e)}")
+            return False
 
-def meet_config(driver, meet_url: str = None):
-    
-    try:
-        config_meet = MeetConfig(driver)
-        random_num = create_random_number()
+    def recording_worker(self):
+        try:
+            recorder = MeetRecorder(driver=self.driver)
+            
+            # Wait for start signal
+            self.start_event.wait()
+            
+            # Start recording
+            recorder.start_recording()
+            print("Recording started")
+            
+            # Wait for stop signal
+            self.stop_event.wait()
+            
+            # Stop recording
+            self.video_path = recorder.stop_recording()
+            print("Recording stopped")
+            
+            if self.video_path:
+                self.save_recording()
+            
+            self.recording_finished.set()
+        except Exception as e:
+            self.error_queue.put(f"Recording error: {str(e)}")
 
-        driver.get(meet_url)
-        print("Redirected to Google Meet", meet_url)
-        time.sleep(3)
-        config_meet.continue_without_mic_video()
-        config_meet.type_username(random_num)
-        config_meet.ask_join_meet()
-        config_meet.dismiss_popup()
-        config_meet.click_on_caption()
-        
-        return config_meet
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()  # Print the full stack trace 
-    
-def saving_meet_recording(video_path):
-    try:
-        # Verify the Recording path video file exists # 
-        recording_path = 'recordings'
-        if not os.path.exists(recording_path):
-            os.makedirs(recording_path)
+    def transcription_worker(self):
+        try:
+            transcriber = TranscriptionExtractor(driver=self.driver, transcript_path="transcript.txt")
+            
+            # Wait for start signal
+            self.start_event.wait()
+            
+            # Start transcription
+            transcriber.extract_transcription()
+            print("Transcription started")
+            
+            # Wait for stop signal
+            self.stop_event.wait()
+            
+            # Stop transcription
+            transcriber.stop_transcription()
+            print("Transcription stopped")
+            
+            self.transcription_finished.set()
+        except Exception as e:
+            self.error_queue.put(f"Transcription error: {str(e)}")
 
-        if video_path:  # Only proceed if video_path is not None
-            full_video_path = os.path.join(recording_path, video_path)
-            print(f"Video path: {full_video_path}")
-        
-        time.sleep(2)
-        # Verify the full path video file exists
-        if os.path.exists(full_video_path):
-            # Upload video to S3
-            try:
-                upload_file_to_s3(full_video_path, f"meet_{video_path}.webm") 
-                print(f"Video uploaded to S3: {video_path}")
-            except Exception as s3_error:
-                print(f"Error uploading video to S3: {s3_error}")
-        else:
-            print(f"Video file does not exist: {full_video_path}")
-    except Exception as record_error:
-        print(f"Error during recording stop: {record_error}")
-        raise # Re-raise the exception to see the full error stack
+    def save_recording(self):
+        try:
+            recording_path = 'recordings'
+            if not os.path.exists(recording_path):
+                os.makedirs(recording_path)
 
+            full_video_path = os.path.join(recording_path, self.video_path)
+            
+            if os.path.exists(full_video_path):
+                upload_file_to_s3(full_video_path, f"meet_{self.video_path}.webm")
+                print(f"Video uploaded to S3: {self.video_path}")
+            else:
+                print(f"Video file not found: {full_video_path}")
+        except Exception as e:
+            self.error_queue.put(f"Save recording error: {str(e)}")
 
-def start_stop_recording(driver, config_meet, leave_meet: bool = False ):
-    try:
-        recording_meet = MeetRecorder(driver=driver)
-        # Start Recording
-        recording_meet.start_recording()
+    def run(self):
+        try:
+            if not self.setup_meet():
+                return False
 
-        while not config_meet.check_num_participants():
-            time.sleep(1)
-        else:
-            leave_meet = True
+            # Create worker threads
+            recording_thread = threading.Thread(target=self.recording_worker)
+            transcription_thread = threading.Thread(target=self.transcription_worker)
 
-        if leave_meet:
-            try:
-                # Stop Recording
-                video_path = recording_meet.stop_recording()
-                if video_path:  # Only proceed if video_path is not None
-                    saving_meet_recording(video_path)
-            except Exception as record_error:
-                print(f"Error during recording stop: {record_error}")
-                raise # Re-raise the exception to see the full error stack
-        return video_path
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()  # Print the full stack trace
+            # Start threads (they will wait for the start event)
+            recording_thread.start()
+            transcription_thread.start()
 
-def start_stop_transcription(driver, transcript_path: str = "transcript.txt"):
-    try:
-        transcription_extractor = TranscriptionExtractor(driver=driver, transcript_path=transcript_path)
-        transcription_extractor.extract_transcription()
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()  # Print the full stack trace
+            # Signal both threads to start simultaneously
+            self.start_event.set()
+            print("Recording and transcription started simultaneously")
 
+            # Monitor participant count
+            while not self.config_meet.check_num_participants():
+                if not self.error_queue.empty():
+                    raise Exception(self.error_queue.get())
+                time.sleep(1)
 
-def google_meet(meet_url: str = None, leave_meet: bool = False):
-    try:
-        meeting_code = extract_meeting_code(meet_url)
-        driver = create_stealth_driver(meeting_code=meeting_code)
+            # Signal both threads to stop simultaneously
+            self.stop_event.set()
+            print("Signaling recording and transcription to stop")
 
-        # Start Meet
-        config_meet = meet_config(driver, meet_url)
+            # Wait for both processes to finish
+            recording_thread.join(timeout=10)
+            transcription_thread.join(timeout=10)
 
-        # Initialize transcription
-        transcription_extractor = TranscriptionExtractor(driver=driver, transcript_path="transcript.txt")
-        
-        # Create threads for both recording and transcription
-        def recording_task():
-            try:
-                video_path = start_stop_recording(driver=driver, leave_meet=leave_meet, config_meet=config_meet)
-                setattr(threading.current_thread(), 'video_path', video_path)
-            except Exception as e:
-                print(f"Error in recording thread: {e}")
-        
-        recording_thread = threading.Thread(target=recording_task)
-        transcription_thread = threading.Thread(target=transcription_extractor.extract_transcription)
+            # Check for any errors
+            if not self.error_queue.empty():
+                raise Exception(self.error_queue.get())
 
-        # Start threads
-        print("Starting recording and transcription concurrently...")
-        recording_thread.start()
-        transcription_thread.start()
+            return True
 
-        # Monitor participant count
-        while not config_meet.check_num_participants():
-            time.sleep(1)
+        except Exception as e:
+            print(f"Session error: {str(e)}")
+            return False
+        finally:
+            if self.config_meet:
+                self.config_meet.leave_meet()
+            if self.driver:
+                self.driver.quit()
+            if os.path.exists('transcript.txt'):
+                async_transcript_insights()
 
-        # Stop threads after meeting ends
-        recording_thread.join(timeout=5)
-        transcription_thread.join(timeout=5)
-
-        return True
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        # Cleanup
-        if 'transcription_extractor' in locals():
-            transcription_extractor.stop_transcription()
-        if 'config_meet' in locals():
-            config_meet.leave_meet()
-        if 'driver' in locals():
-            driver.quit()
+def google_meet(meet_url: str):
+    session = MeetSession(meet_url)
+    return session.run()

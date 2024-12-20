@@ -8,7 +8,6 @@ from enum import Enum
 import asyncio
 
 from main import google_meet
-from transcript_insight import async_transcript_insights
 
 # Configure logging
 logging.basicConfig(
@@ -61,8 +60,9 @@ async def new_meeting(request: MeetingRequest):
     - Initiates bot joining process
     """
     try:
-        success = google_meet(request.meetUrl)
-        await async_transcript_insights()
+        success = await asyncio.gather(google_meet(request.meetUrl))
+
+        # Return success response if bot started successfully, else raise a 400 Bad Request error
         if success:
             return MeetingResponse(
                 status=StatusEnum.SUCCESS,

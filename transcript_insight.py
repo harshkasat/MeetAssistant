@@ -11,8 +11,6 @@ from reportlab.platypus import (
     SimpleDocTemplate,
     Paragraph,
     Spacer,
-    Table,
-    TableStyle,
 )
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.enums import TA_CENTER
@@ -85,8 +83,7 @@ async def generate_pdf(engagement, participants, key_questions, sentiment, summa
 
     # Add participants
     content.append(Paragraph("Participants", section_title_style))
-    participant_list = "<br />".join([f"• {participant}" for participant in participants])
-    content.append(Paragraph(participant_list, body_style))
+    content.append(Paragraph(participants, body_style))
     content.append(Spacer(1, 12))
 
     # Add engagement
@@ -96,31 +93,13 @@ async def generate_pdf(engagement, participants, key_questions, sentiment, summa
 
     # Add sentiment analysis
     content.append(Paragraph("Sentimental Analysis", section_title_style))
-    sentiment_table_data = [["Aspect", "Analysis"]]
-    for aspect, analysis in sentiment.items():
-        sentiment_table_data.append([aspect, analysis])
-
-    table = Table(sentiment_table_data, hAlign="LEFT")
-    table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
-                ("ALIGN", (0, 0), (-1, -1), "LEFT"),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("BOTTOMPADDING", (0, 0), (-1, 0), 12),
-                ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
-                ("GRID", (0, 0), (-1, -1), 1, colors.black),
-            ]
-        )
-    )
-    content.append(table)
+    # Modified sentiment analysis section to handle string input
+    content.append(Paragraph(sentiment, body_style))
     content.append(Spacer(1, 12))
 
     # Add key questions
     content.append(Paragraph("Key Questions", section_title_style))
-    question_list = "<br />".join([f"• {question}" for question in key_questions])
-    content.append(Paragraph(question_list, body_style))
+    content.append(Paragraph(key_questions, body_style))
     content.append(Spacer(1, 12))
 
     # Build PDF
