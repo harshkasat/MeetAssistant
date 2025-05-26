@@ -52,4 +52,4 @@ EXPOSE 8000 9222
 USER seluser
 
 # Use exec form of CMD for better signal handling
-CMD ["/bin/sh", "-c", "Xvfb :99 -ac 2>/var/log/xvfb.log & uvicorn extension_api:app --host 0.0.0.0 --port 8000"]
+CMD ["/bin/sh", "-c", "Xvfb :99 -ac 2>/var/log/xvfb.log & uvicorn app:app --host 0.0.0.0 --port 8000"]

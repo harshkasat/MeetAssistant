@@ -28,17 +28,17 @@ class MeetSession:
             meeting_code = extract_meeting_code(self.meet_url)
             self.driver = create_stealth_driver(meeting_code=meeting_code)
             self.config_meet = MeetConfig(self.driver)
-            
+
             self.driver.get(self.meet_url)
             print("Redirected to Google Meet", self.meet_url)
             time.sleep(3)
-            
+
             self.config_meet.continue_without_mic_video()
             self.config_meet.type_username(random.randint(1000, 9999))
             self.config_meet.ask_join_meet()
             self.config_meet.dismiss_popup()
             self.config_meet.click_on_caption()
-            
+
             return True
         except Exception as e:
             self.error_queue.put(f"Setup error: {str(e)}")
@@ -47,58 +47,60 @@ class MeetSession:
     def recording_worker(self):
         try:
             recorder = MeetRecorder(driver=self.driver)
-            
+
             # Wait for start signal
             self.start_event.wait()
-            
+
             # Start recording
             recorder.start_recording()
             print("Recording started")
-            
+
             # Wait for stop signal
             self.stop_event.wait()
-            
+
             # Stop recording
             self.video_path = recorder.stop_recording()
             print("Recording stopped")
-            
+
             if self.video_path:
                 self.save_recording()
-            
+
             self.recording_finished.set()
         except Exception as e:
             self.error_queue.put(f"Recording error: {str(e)}")
 
     def transcription_worker(self):
         try:
-            transcriber = TranscriptionExtractor(driver=self.driver, transcript_path="transcript.txt")
-            
+            transcriber = TranscriptionExtractor(
+                driver=self.driver, transcript_path="transcript.txt"
+            )
+
             # Wait for start signal
             self.start_event.wait()
-            
+
             # Start transcription
             transcriber.extract_transcription()
             print("Transcription started")
-            
+
             # Wait for stop signal
             self.stop_event.wait()
-            
+
             # Stop transcription
             transcriber.stop_transcription()
             print("Transcription stopped")
-            
+
             self.transcription_finished.set()
         except Exception as e:
             self.error_queue.put(f"Transcription error: {str(e)}")
 
     def save_recording(self):
         try:
-            recording_path = 'recordings'
+            recording_path = "recordings"
             if not os.path.exists(recording_path):
                 os.makedirs(recording_path)
 
             full_video_path = os.path.join(recording_path, self.video_path)
-            
+
             if os.path.exists(full_video_path):
                 upload_file_to_s3(full_video_path, f"meet_{self.video_path}.webm")
                 print(f"Video uploaded to S3: {self.video_path}")
@@ -152,8 +154,9 @@ class MeetSession:
                 self.config_meet.leave_meet()
             if self.driver:
                 self.driver.quit()
-            if os.path.exists('transcript.txt'):
+            if os.path.exists("transcript.txt"):
                 async_transcript_insights()
+
 
 def google_meet(meet_url: str):
     session = MeetSession(meet_url)

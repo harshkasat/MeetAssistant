@@ -2,6 +2,7 @@ from TranscriptInsight import get_transcript
 
 import os
 from dotenv import load_dotenv
+
 load_dotenv()
 
 
@@ -38,9 +39,9 @@ Here’s what you need to do:
 5. Ensure your analysis is error-free and well-structured.
 
 Let’s begin."""
-TEXT = TEXT.format(transcript = get_transcript())
+TEXT = TEXT.format(transcript=get_transcript())
 
-genai_api_key = os.getenv('GEMINI_API_KEY')
-os.environ['GOOGLE_API_KEY'] = os.getenv('GEMINI_API_KEY')
+genai_api_key = os.getenv("GEMINI_API_KEY")
+os.environ["GOOGLE_API_KEY"] = os.getenv("GEMINI_API_KEY")
 if genai_api_key is None:
     raise ValueError("Missing GEMINI_API_KEY environment variable")

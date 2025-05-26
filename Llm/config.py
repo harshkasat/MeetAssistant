@@ -4,13 +4,13 @@ from Llm import genai_api_key, TEXT
 
 
 # Initialize the API client
-class ApiClient():
-            
+class ApiClient:
     async def configure_llm(self):
         try:
             genai.configure(api_key=genai_api_key)
-            llm = genai.GenerativeModel('models/gemini-1.5-flash',
-                        system_instruction=TEXT)            
+            llm = genai.GenerativeModel(
+                "models/gemini-1.5-flash", system_instruction=TEXT
+            )
 
             if llm is None:
                 raise ValueError("LLM component is None")
@@ -19,7 +19,7 @@ class ApiClient():
             print(f"Failed to configure LLM: {e}")
             return None
 
-    async def generate_content(self, questions:str) -> str:
+    async def generate_content(self, questions: str) -> str:
         try:
             llm = await self.configure_llm()
             response = await llm.generate_content_async(questions)

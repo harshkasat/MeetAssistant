@@ -17,7 +17,7 @@ def upload_file_to_s3(file_content, s3_key):
     if file_content is None:
         logging.error("File content cannot be None")
         return False
-        
+
     try:
         s3_client.upload_file(file_content, Bucket=BUCKET_NAME, Key=s3_key)
     except ClientError as e:

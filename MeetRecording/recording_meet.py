@@ -1,17 +1,17 @@
 from MeetRecording import init_script, recording_script, stop_script
 import time
 
+
 class MeetRecorder:
     def __init__(self, driver):
         self.driver = driver
-        
+
         self.timestamp = time.strftime("%Y%m%d_%H%M%S")
         self.video_file_name = f"meet_recording_{self.timestamp}.webm"
 
-
     def start_recording(self):
         self.driver.execute_script(init_script)
-        
+
         print("Starting recording...")
         try:
             # Execute the initialization first
@@ -29,6 +29,6 @@ class MeetRecorder:
         try:
             self.driver.execute_script(stop_script)
             return self.video_file_name
-            
+
         except Exception as e:
             print(f"Error stopping recording: {str(e)}")

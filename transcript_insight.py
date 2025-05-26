@@ -19,7 +19,7 @@ from reportlab.lib.enums import TA_CENTER
 async def get_transcript_insights():
     # Create a client instance
     client = ApiClient()
-    
+
     # Create a list of tasks to run asynchronously
     tasks = [
         Engagement(client).get_engagement(),
@@ -28,7 +28,7 @@ async def get_transcript_insights():
         SentimentAnalysis(client).get_sentiment_analysis(),
         Summaries(client).get_summary(),
     ]
-    
+
     # Wait for all tasks to complete
     results = await asyncio.gather(*tasks)
 
@@ -106,6 +106,13 @@ async def generate_pdf(engagement, participants, key_questions, sentiment, summa
     doc.build(content)
     print(f"PDF generated: {pdf_file}")
 
+
 async def async_transcript_insights():
-    engagement, participants, key_questions, sentiment, summary = await get_transcript_insights()
+    (
+        engagement,
+        participants,
+        key_questions,
+        sentiment,
+        summary,
+    ) = await get_transcript_insights()
     await generate_pdf(engagement, participants, key_questions, sentiment, summary)

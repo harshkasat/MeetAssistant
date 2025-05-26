@@ -1,4 +1,3 @@
-
 KEY_QUESTIONS_PROMPT = """Your task is to:
 1. Identify and list all key questions that arise from the transcript.
    - Focus on questions asked directly by participants or implied in the conversation.
@@ -11,18 +10,19 @@ Ensure your response is:
 - Clear and structured, categorizing direct and additional questions where possible.
 - Insightful, highlighting how these questions relate to the transcript's content."""
 
+
 class KeyQuestions:
     def __init__(self, client):
         self.client = client
 
-
     async def get_key_questions(self):
         try:
-            key_question = await self.client.generate_content(questions=KEY_QUESTIONS_PROMPT)
+            key_question = await self.client.generate_content(
+                questions=KEY_QUESTIONS_PROMPT
+            )
 
             if key_question:
                 return key_question
         except Exception as e:
             print(f"Failed to generate summary: {e}")
             return None
-
