@@ -1,200 +1,139 @@
-<p align="center">
-    <img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/ec559a9f6bfd399b82bb44393651661b08aaf7ba/icons/folder-markdown-open.svg" align="center" width="30%">
-</p>
-<p align="center"><h1 align="center">MEETASSISTANT</h1></p>
-<p align="center">
-	<em><code>❯ REPLACE-ME</code></em>
-</p>
-<p align="center">
-	<img src="https://img.shields.io/github/license/harshkasat/MeetAssistant?style=default&logo=opensourceinitiative&logoColor=white&color=0080ff" alt="license">
-	<img src="https://img.shields.io/github/last-commit/harshkasat/MeetAssistant?style=default&logo=git&logoColor=white&color=0080ff" alt="last-commit">
-	<img src="https://img.shields.io/github/languages/top/harshkasat/MeetAssistant?style=default&color=0080ff" alt="repo-top-language">
-	<img src="https://img.shields.io/github/languages/count/harshkasat/MeetAssistant?style=default&color=0080ff" alt="repo-language-count">
-</p>
-<p align="center"><!-- default option, no dependency badges. -->
-</p>
-<p align="center">
-	<!-- default option, no dependency badges. -->
-</p>
-<br>
+# MeetAssistant: Automated Google Meet Transcription and Recording
 
-##  Table of Contents
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Build Status](https://github.com/harshkasat/MeetAssistant/actions/workflows/main.yml/badge.svg)](https://github.com/harshkasat/MeetAssistant/actions)
 
-- [ Overview](#-overview)
-- [ Features](#-features)
-- [ Project Structure](#-project-structure)
-  - [ Project Index](#-project-index)
-- [ Getting Started](#-getting-started)
-  - [ Prerequisites](#-prerequisites)
-  - [ Installation](#-installation)
-  - [ Usage](#-usage)
-  - [ Testing](#-testing)
-- [ Project Roadmap](#-project-roadmap)
-- [ Contributing](#-contributing)
-- [ License](#-license)
-- [ Acknowledgments](#-acknowledgments)
 
----
+## 1. Project Title and Short Description
 
-##  Overview
+MeetAssistant is a Python-based automation tool that joins Google Meet meetings, records the session, transcribes the audio, and generates insightful reports based on the transcription.  It leverages Selenium for browser automation, and integrates with AWS S3 for storing recordings and potentially other services for transcription analysis (LLM integration suggested but not fully implemented in provided code).
 
-<code>❯ REPLACE-ME</code>
 
----
+## 2. Project Overview
 
-##  Features
+MeetAssistant automates the process of attending, recording, and transcribing Google Meet sessions. This eliminates the manual effort involved in these tasks, providing a streamlined workflow for users who frequently participate in online meetings.  The tool's key differentiator is its ability to generate insightful reports analyzing meeting engagement, participant activity, key questions asked, sentiment analysis, and summaries. This feature is partially implemented, relying on an external API (LLM) for deeper analysis.
 
-<code>❯ REPLACE-ME</code>
 
----
+## 3. Table of Contents
 
-##  Project Structure
+* [Project Title and Short Description](#project-title-and-short-description)
+* [Project Overview](#project-overview)
+* [Table of Contents](#table-of-contents)
+* [Prerequisites](#prerequisites)
+* [Installation Guide](#installation-guide)
+* [Configuration](#configuration)
+* [Usage Examples](#usage-examples)
+* [Project Architecture](#project-architecture)
+* [API Reference](#api-reference)
+* [Contributing Guidelines](#contributing-guidelines)
+* [Testing](#testing)
+* [Deployment](#deployment)
+* [License](#license)
 
-```sh
-└── MeetAssistant/
-    ├── chrome_extension
-    │   ├── background.js
-    │   └── manifest.json
-    ├── extension.py
-    └── google_meet.py
+
+## 4. Prerequisites
+
+* **Python 3.7+:** The project is built using Python.
+* **Dependencies:**  The `requirements.txt` file lists all necessary Python packages.  Install them using `pip install -r requirements.txt`.
+* **ChromeDriver:** Selenium requires a compatible ChromeDriver. Download the appropriate version for your Chrome browser.  The project uses `undetected-chromedriver` to help evade detection.
+* **AWS Credentials (Optional):**  For S3 integration, configure AWS access keys.
+* **LLM API Key (Optional):**  The transcription insight generation relies on an LLM API (not specified in the provided code) and requires an API key.
+
+
+## 5. Installation Guide
+
+1. **Clone the repository:** `git clone https://github.com/harshkasat/MeetAssistant.git`
+2. **Navigate to the directory:** `cd MeetAssistant`
+3. **Install dependencies:** `pip install -r requirements.txt`
+4. **Download ChromeDriver:** Download the appropriate version from [https://chromedriver.chromium.org/downloads](https://chromedriver.chromium.org/downloads) and place it in your system's PATH or specify the path in the code.
+5. **Configure AWS (Optional):** Set up AWS credentials using environment variables (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_DEFAULT_REGION).
+
+
+## 6. Configuration
+
+The primary configuration is done through environment variables (if using AWS) and potentially through an external configuration file (not explicitly defined in the code).  The Google Meet URL is passed as an argument to the `google_meet` function.
+
+## 7. Usage Examples
+
+The core functionality is accessed through the `extension_api.py` which exposes a FastAPI endpoint.  The  `google_meet` function in `main.py` handles the meeting joining, recording, and transcription.
+
+**Example (using the FastAPI endpoint):**
+
+Send a POST request to `/new-meeting` with the Google Meet URL in the `meetUrl` field:
+
+```bash
+curl -X POST -H "Content-Type: application/json" -d '{"meetUrl": "https://meet.google.com/abc-defg-hij"}' http://localhost:8000/new-meeting
+```
+
+**Example (from `main.py` -  not intended for direct use):**
+
+```python
+from main import google_meet
+
+google_meet("https://meet.google.com/abc-defg-hij") #Starts the process
 ```
 
 
-###  Project Index
-<details open>
-	<summary><b><code>MEETASSISTANT/</code></b></summary>
-	<details> <!-- __root__ Submodule -->
-		<summary><b>__root__</b></summary>
-		<blockquote>
-			<table>
-			<tr>
-				<td><b><a href='https://github.com/harshkasat/MeetAssistant/blob/master/extension.py'>extension.py</a></b></td>
-				<td><code>❯ REPLACE-ME</code></td>
-			</tr>
-			<tr>
-				<td><b><a href='https://github.com/harshkasat/MeetAssistant/blob/master/google_meet.py'>google_meet.py</a></b></td>
-				<td><code>❯ REPLACE-ME</code></td>
-			</tr>
-			</table>
-		</blockquote>
-	</details>
-	<details> <!-- chrome_extension Submodule -->
-		<summary><b>chrome_extension</b></summary>
-		<blockquote>
-			<table>
-			<tr>
-				<td><b><a href='https://github.com/harshkasat/MeetAssistant/blob/master/chrome_extension/background.js'>background.js</a></b></td>
-				<td><code>❯ REPLACE-ME</code></td>
-			</tr>
-			<tr>
-				<td><b><a href='https://github.com/harshkasat/MeetAssistant/blob/master/chrome_extension/manifest.json'>manifest.json</a></b></td>
-				<td><code>❯ REPLACE-ME</code></td>
-			</tr>
-			</table>
-		</blockquote>
-	</details>
-</details>
-
----
-##  Getting Started
-
-###  Prerequisites
-
-Before getting started with MeetAssistant, ensure your runtime environment meets the following requirements:
-
-- **Programming Language:** Python
-
-
-###  Installation
-
-Install MeetAssistant using one of the following methods:
-
-**Build from source:**
-
-1. Clone the MeetAssistant repository:
-```sh
-❯ git clone https://github.com/harshkasat/MeetAssistant
-```
-
-2. Navigate to the project directory:
-```sh
-❯ cd MeetAssistant
-```
-
-3. Install the project dependencies:
-
-echo 'INSERT-INSTALL-COMMAND-HERE'
+The `google_meet` function uses threading to run recording and transcription concurrently. The `start_stop_recording` function in `main.py` handles recording using `MeetRecorder`, and `start_stop_transcription` handles transcription using `TranscriptionExtractor`.  These functions interact with the Selenium driver to control the browser.  Error handling is present but could be improved.
 
 
 
-###  Usage
-Run MeetAssistant using the following command:
-echo 'INSERT-RUN-COMMAND-HERE'
+## 8. Project Architecture
 
-###  Testing
-Run the test suite using the following command:
-echo 'INSERT-TEST-COMMAND-HERE'
+The project is structured into several modules:
 
----
-##  Project Roadmap
+* **Automation:** Contains functions for joining and interacting with Google Meet.
+* **AwsService:** Handles interaction with AWS S3 for storing recordings.
+* **Llm:** (Partially implemented) Intended for interaction with an LLM API for advanced transcript analysis.
+* **MeetRecording:**  Handles the recording of the meeting.
+* **MeetTranscript:** Handles transcription extraction.
+* **TranscriptInsight:** (Partially implemented)  Processes the transcription to generate insights (engagement, participants, key questions, sentiment, summaries).  Uses `reportlab` to generate a PDF report.
+* **extension_api:**  Provides a FastAPI web server for external interaction.
 
-- [X] **`Task 1`**: <strike>Implement feature one.</strike>
-- [ ] **`Task 2`**: Implement feature two.
-- [ ] **`Task 3`**: Implement feature three.
 
----
+## 9. API Reference
 
-##  Contributing
+The project exposes a REST API via FastAPI:
 
-- **💬 [Join the Discussions](https://github.com/harshkasat/MeetAssistant/discussions)**: Share your insights, provide feedback, or ask questions.
-- **🐛 [Report Issues](https://github.com/harshkasat/MeetAssistant/issues)**: Submit bugs found or log feature requests for the `MeetAssistant` project.
-- **💡 [Submit Pull Requests](https://github.com/harshkasat/MeetAssistant/blob/main/CONTRIBUTING.md)**: Review open PRs, and submit your own PRs.
+* **Endpoint:** `/new-meeting`
+* **Method:** `POST`
+* **Request Body:**  `{"meetUrl": "https://meet.google.com/your-meeting-code"}`
+* **Response:**  A JSON object indicating success or failure.
 
-<details closed>
-<summary>Contributing Guidelines</summary>
 
-1. **Fork the Repository**: Start by forking the project repository to your github account.
-2. **Clone Locally**: Clone the forked repository to your local machine using a git client.
-   ```sh
-   git clone https://github.com/harshkasat/MeetAssistant
-   ```
-3. **Create a New Branch**: Always work on a new branch, giving it a descriptive name.
-   ```sh
-   git checkout -b new-feature-x
-   ```
-4. **Make Your Changes**: Develop and test your changes locally.
-5. **Commit Your Changes**: Commit with a clear message describing your updates.
-   ```sh
-   git commit -m 'Implemented new feature x.'
-   ```
-6. **Push to github**: Push the changes to your forked repository.
-   ```sh
-   git push origin new-feature-x
-   ```
-7. **Submit a Pull Request**: Create a PR against the original project repository. Clearly describe the changes and their motivations.
-8. **Review**: Once your PR is reviewed and approved, it will be merged into the main branch. Congratulations on your contribution!
-</details>
+## 10.  Contributing Guidelines
 
-<details closed>
-<summary>Contributor Graph</summary>
-<br>
-<p align="left">
-   <a href="https://github.com{/harshkasat/MeetAssistant/}graphs/contributors">
-      <img src="https://contrib.rocks/image?repo=harshkasat/MeetAssistant">
-   </a>
-</p>
-</details>
+Contributions are welcome!  Please open issues for bug reports and feature requests.  Follow standard GitHub pull request procedures.  A code of conduct and detailed contribution guidelines are not explicitly defined in the provided files.
 
----
 
-##  License
+## 11. Testing
 
-This project is protected under the [SELECT-A-LICENSE](https://choosealicense.com/licenses) License. For more details, refer to the [LICENSE](https://choosealicense.com/licenses/) file.
+Testing is not explicitly implemented in the provided code.
 
----
 
-##  Acknowledgments
+## 12. Deployment
 
-- List any resources, contributors, inspiration, etc. here.
+The project can be deployed using uvicorn (for the FastAPI server) and Docker (suggested by the presence of `run_docker.sh` and `stop_docker.sh`).  Deployment instructions are not detailed.
 
----
+
+## 13. Security
+
+Security considerations are not explicitly addressed in the provided documentation.  Use of `undetected-chromedriver` suggests an attempt to evade detection, but further security measures are needed.
+
+
+## 14. License
+
+The project is licensed under the MIT License.  (See LICENSE file).
+
+
+## 15. Acknowledgments
+
+No explicit acknowledgments are provided in the code.
+
+
+## 16. Contact and Support
+
+No explicit contact information is provided.
+
+
+This README provides a comprehensive overview based on the provided code and files.  Many sections require further development and detail within the project itself.
